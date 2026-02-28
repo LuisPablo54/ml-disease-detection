@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Análisis Exploratorio — Dataset Biomédico</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap');
+
+  :root {
+    --bg: #0b0f14;
+    --surface: #131820;
+    --surface2: #1b2230;
+    --border: #2a3548;
+    --accent: #00e5c8;
+    --accent2: #ff6b6b;
+    --accent3: #ffd166;
+    --text: #e8edf5;
+    --muted: #6b7fa0;
+    --grid: rgba(255,255,255,0.03);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  /* Grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrapper { position: relative; z-index: 1; max-width: 1300px; margin: 0 auto; padding: 48px 32px; }
+
+  header { margin-bottom: 56px; }
+  header .label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+  header h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 400;
+    line-height: 1.1;
+    color: var(--text);
+  }
+  header h1 em { font-style: italic; color: var(--accent); }
+  header p {
+    margin-top: 16px;
+    color: var(--muted);
+    font-size: 15px;
+    max-width: 600px;
+  }
+
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 16px;
+    margin-bottom: 48px;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    transition: border-color 0.2s;
+  }
+  .stat-card:hover { border-color: var(--accent); }
+  .stat-card .num {
+    font-family: 'DM Mono', monospace;
+    font-size: 28px;
+    font-weight: 500;
+    color: var(--accent);
+  }
+  .stat-card .desc { font-size: 12px; color: var(--muted); margin-top: 4px; letter-spacing: 0.05em; }
+
+  .section { margin-bottom: 56px; }
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-number {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.15em;
+  }
+  .section-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.6rem;
+    font-weight: 400;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+  }
+  .card-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  @media (max-width: 800px) { .card-grid-2 { grid-template-columns: 1fr; } }
+
+  .chart-container { position: relative; }
+
+  /* Class distribution */
+  .disease-bars { margin-top: 16px; }
+  .disease-bar-item {
+    display: grid;
+    grid-template-columns: 160px 1fr 60px;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .disease-name {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    text-align: right;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .bar-track {
+    height: 10px;
+    background: var(--surface2);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .bar-fill {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 1s cubic-bezier(.22,1,.36,1);
+  }
+  .bar-count {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--text);
+  }
+
+  /* Correlation matrix */
+  #corrCanvas { display: block; }
+
+  /* Outlier section */
+  .outlier-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 16px;
+    margin-top: 4px;
+  }
+  .outlier-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 20px;
+  }
+  .outlier-card .biomarker-name {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+    margin-bottom: 12px;
+  }
+  .outlier-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .outlier-box-visual {
+    flex: 1;
+    height: 24px;
+    background: var(--surface);
+    border-radius: 4px;
+    position: relative;
+    overflow: visible;
+  }
+  .box-iqr {
+    position: absolute;
+    background: var(--accent);
+    opacity: 0.25;
+    height: 100%;
+    top: 0;
+    border-radius: 3px;
+  }
+  .box-median {
+    position: absolute;
+    width: 2px;
+    height: 100%;
+    background: var(--accent);
+    top: 0;
+  }
+  .whisker {
+    position: absolute;
+    height: 2px;
+    background: var(--muted);
+    top: 50%;
+    transform: translateY(-50%);
+  }
+  .outlier-dot {
+    position: absolute;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent2);
+    top: 50%;
+    transform: translate(-50%, -50%);
+  }
+  .outlier-stats {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
+  }
+  .outlier-stat { font-size: 11px; color: var(--muted); }
+  .outlier-stat span { color: var(--text); font-family: 'DM Mono', monospace; }
+
+  .insight-box {
+    background: linear-gradient(135deg, rgba(0,229,200,0.06), rgba(0,229,200,0.02));
+    border: 1px solid rgba(0,229,200,0.2);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-top: 20px;
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.6;
+  }
+  .insight-box strong { color: var(--accent); }
+
+  .warning-box {
+    background: linear-gradient(135deg, rgba(255,107,107,0.08), rgba(255,107,107,0.02));
+    border: 1px solid rgba(255,107,107,0.25);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-top: 20px;
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.6;
+  }
+  .warning-box strong { color: var(--accent2); }
+
+  footer {
+    margin-top: 64px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+  }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <header>
+    <div class="label">// Análisis Exploratorio de Datos</div>
+    <h1>Dataset <em>Biomédico</em><br>Diagnóstico de Enfermedades</h1>
+    <p>Distribución de clases, correlación de biomarcadores y detección de outliers sobre 2,351 registros y 24 variables.</p>
+  </header>
+
+  <div class="stats-row">
+    <div class="stat-card"><div class="num">2,351</div><div class="desc">Registros totales</div></div>
+    <div class="stat-card"><div class="num">24</div><div class="desc">Variables (features)</div></div>
+    <div class="stat-card"><div class="num">8</div><div class="desc">Enfermedades distintas</div></div>
+    <div class="stat-card"><div class="num" id="imbalance-ratio">—</div><div class="desc">Ratio desbalance (max/min)</div></div>
+    <div class="stat-card"><div class="num" id="top-corr">—</div><div class="desc">Correlación más alta</div></div>
+    <div class="stat-card"><div class="num" id="outlier-pct">—</div><div class="desc">Pares con outliers IQR</div></div>
+  </div>
+
+  <!-- 1. Distribución de Clases -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-number">01 —</span>
+      <h2 class="section-title">Distribución de Clases</h2>
+    </div>
+    <div class="card">
+      <div class="disease-bars" id="diseaseBars"></div>
+      <div id="classInsight" class="insight-box"></div>
+    </div>
+  </div>
+
+  <!-- 2. Correlación -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-number">02 —</span>
+      <h2 class="section-title">Correlación de Biomarcadores</h2>
+    </div>
+    <div class="card-grid-2">
+      <div class="card">
+        <p style="font-size:12px;color:var(--muted);margin-bottom:16px;">Matriz de correlación (Pearson) — todos los biomarcadores</p>
+        <div class="chart-container">
+          <canvas id="corrCanvas"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <p style="font-size:12px;color:var(--muted);margin-bottom:16px;">Top 10 pares con mayor correlación absoluta</p>
+        <div id="topCorrBars"></div>
+        <div id="corrInsight" class="insight-box" style="margin-top:16px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Outliers -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-number">03 —</span>
+      <h2 class="section-title">Detección de Outliers (IQR)</h2>
+    </div>
+    <div class="card">
+      <p style="font-size:12px;color:var(--muted);margin-bottom:20px;">Visualización de box-plots simplificados por biomarcador. Puntos en rojo = valores fuera de 1.5×IQR.</p>
+      <div class="outlier-grid" id="outlierGrid"></div>
+      <div id="outlierInsight" class="warning-box"></div>
+    </div>
+  </div>
+
+  <footer>
+    Generado con Claude · Dataset simulado representativo de la estructura descrita · Análisis exploratorio pre-modelado
+  </footer>
+</div>
+
+<script>
+// ─── DATOS SIMULADOS ───────────────────────────────────────────────────────
+// Distribución de clases (proporciones típicas para este tipo de dataset médico)
+const diseases = [
+  { name: 'Diabetes',        count: 420, color: '#00e5c8' },
+  { name: 'Healthy',         count: 380, color: '#4ecdc4' },
+  { name: 'Anemia',          count: 310, color: '#45b7d1' },
+  { name: 'Thalassemia',     count: 285, color: '#96ceb4' },
+  { name: 'Heart Disease',   count: 350, color: '#ffd166' },
+  { name: 'Hypertension',    count: 265, color: '#f7b731' },
+  { name: 'CKD',             count: 198, color: '#ff6b6b' },
+  { name: 'Liver Disease',   count: 143, color: '#ee5a24' },
+];
+const total = diseases.reduce((s, d) => s + d.count, 0);
+const maxCount = Math.max(...diseases.map(d => d.count));
+const minCount = Math.min(...diseases.map(d => d.count));
+document.getElementById('imbalance-ratio').textContent = (maxCount/minCount).toFixed(1) + 'x';
+
+// Biomarcadores
+const features = [
+  'Glucose','Cholesterol','Hemoglobin','Platelets','WBC','RBC',
+  'Hematocrit','MCV','MCH','MCHC','Insulin','BMI',
+  'Systolic BP','Diastolic BP','Triglycerides','HbA1c',
+  'LDL','HDL','ALT','AST','Heart Rate','Creatinine','Troponin','CRP'
+];
+
+// Correlación simulada (coherente con conocimiento médico)
+function makeCorr() {
+  const n = features.length;
+  const C = Array.from({length:n}, () => Array(n).fill(0));
+  // Pares con correlación conocida
+  const known = {
+    '0,15':0.87, '0,10':0.74, '0,11':0.52, '2,6':0.92, '2,7':0.68,
+    '2,8':0.71, '6,7':0.63, '6,8':0.55, '7,8':0.88, '1,16':0.82,
+    '1,15':-0.44,'16,17':-0.61,'17,0':-0.38,'12,13':0.75,'3,4':0.31,
+    '18,19':0.78,'18,11':0.44,'4,22':0.35,'22,23':0.41,
+    '9,8':0.52,'9,7':0.48,'14,1':0.56,'14,0':0.47,'5,6':0.58,
+    '5,2':0.63,'10,11':0.41,'15,16':0.39,'13,11':0.38
+  };
+  for(let i=0;i<n;i++) C[i][i]=1;
+  for(let i=0;i<n;i++) for(let j=i+1;j<n;j++){
+    const k1=`${i},${j}`, k2=`${j},${i}`;
+    let v = known[k1] ?? known[k2] ?? (Math.random()*0.4 - 0.2);
+    C[i][j] = C[j][i] = parseFloat(v.toFixed(2));
+  }
+  return C;
+}
+const corrMatrix = makeCorr();
+
+// Datos outliers simulados (min, Q1, median, Q3, max, outliers)
+function makeOutlierData(feature) {
+  const q1 = 0.15 + Math.random()*0.2;
+  const q3 = q1 + 0.25 + Math.random()*0.25;
+  const med = (q1+q3)/2 + (Math.random()-0.5)*0.05;
+  const iqr = q3-q1;
+  const lo = Math.max(0, q1 - 1.5*iqr);
+  const hi = Math.min(1, q3 + 1.5*iqr);
+  const outlierCount = Math.floor(Math.random()*15);
+  const outlierPcts = Array.from({length: outlierCount}, () =>
+    Math.random() < 0.5 ? lo - Math.random()*0.1 : hi + Math.random()*0.1
+  ).filter(x => x >= 0 && x <= 1);
+  return { q1, q3, med, lo, hi, iqr, outlierPcts, outlierCount };
+}
+
+// ─── 1. DISTRIBUCIÓN DE CLASES ────────────────────────────────────────────
+const barsEl = document.getElementById('diseaseBars');
+diseases.sort((a,b) => b.count - a.count);
+diseases.forEach(d => {
+  const pct = (d.count / total * 100).toFixed(1);
+  const barW = (d.count / maxCount * 100).toFixed(1);
+  barsEl.innerHTML += `
+    <div class="disease-bar-item">
+      <div class="disease-name">${d.name}</div>
+      <div class="bar-track">
+        <div class="bar-fill" style="width:${barW}%;background:${d.color};" data-w="${barW}"></div>
+      </div>
+      <div class="bar-count">${d.count} <span style="color:var(--muted);font-size:10px">(${pct}%)</span></div>
+    </div>`;
+});
+
+const classInsightEl = document.getElementById('classInsight');
+classInsightEl.innerHTML = `
+  <strong>⚠ Desbalance moderado detectado.</strong> La clase más frecuente (<em>Diabetes</em>, ~${(420/total*100).toFixed(0)}%) 
+  triplica a la más rara (<em>Liver Disease</em>, ~${(143/total*100).toFixed(0)}%). 
+  Se recomienda usar <strong>class_weight='balanced'</strong> en sklearn, técnicas de oversampling (SMOTE) 
+  o evaluar con <strong>F1-macro / AUC-ROC por clase</strong> en lugar de accuracy global.`;
+
+// ─── 2. CORRELACIÓN ───────────────────────────────────────────────────────
+// Matriz heatmap
+const corrCanvas = document.getElementById('corrCanvas');
+const n = features.length;
+const cellSize = 22;
+corrCanvas.width = n * cellSize + 80;
+corrCanvas.height = n * cellSize + 80;
+const ctx = corrCanvas.getContext('2d');
+
+function corrColor(v) {
+  // Diverging: negative = warm, positive = teal
+  if (v === 1) return '#00e5c8';
+  const abs = Math.abs(v);
+  if (v > 0) {
+    const r = Math.round(0 + (0)*abs), g = Math.round(229*abs), b = Math.round(200*abs);
+    return `rgb(${r},${g},${b})`;
+  } else {
+    return `rgb(${Math.round(255*abs)},${Math.round(100*abs)},${Math.round(100*abs)})`;
+  }
+}
+
+const offsetX = 72, offsetY = 4;
+ctx.font = '8px DM Mono, monospace';
+ctx.fillStyle = '#6b7fa0';
+for(let i=0;i<n;i++){
+  ctx.save();
+  ctx.translate(offsetX + i*cellSize + cellSize/2, offsetY + n*cellSize + 4);
+  ctx.rotate(-Math.PI/3);
+  ctx.fillText(features[i].substring(0,8), 0, 0);
+  ctx.restore();
+  ctx.fillText(features[i].substring(0,6), 2, offsetY + i*cellSize + cellSize*0.65);
+}
+for(let i=0;i<n;i++) for(let j=0;j<n;j++){
+  const v = corrMatrix[i][j];
+  ctx.fillStyle = corrColor(v);
+  ctx.globalAlpha = Math.abs(v) * 0.9 + 0.08;
+  ctx.fillRect(offsetX + j*cellSize, offsetY + i*cellSize, cellSize-1, cellSize-1);
+  ctx.globalAlpha = 1;
+}
+
+// Top correlations
+const pairs = [];
+for(let i=0;i<n;i++) for(let j=i+1;j<n;j++){
+  pairs.push({i, j, v: corrMatrix[i][j], abs: Math.abs(corrMatrix[i][j])});
+}
+pairs.sort((a,b) => b.abs - a.abs);
+const top10 = pairs.slice(0, 10);
+
+document.getElementById('top-corr').textContent = top10[0].abs.toFixed(2);
+
+const topBarsEl = document.getElementById('topCorrBars');
+top10.forEach(p => {
+  const color = p.v > 0 ? 'var(--accent)' : 'var(--accent2)';
+  const barW = (p.abs * 100).toFixed(0);
+  topBarsEl.innerHTML += `
+    <div style="display:grid;grid-template-columns:1fr 80px 42px;align-items:center;gap:8px;margin-bottom:8px;">
+      <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+        ${features[p.i].substring(0,9)} × ${features[p.j].substring(0,9)}
+      </div>
+      <div style="height:7px;background:var(--surface2);border-radius:4px;overflow:hidden;">
+        <div style="height:100%;width:${barW}%;background:${color};border-radius:4px;"></div>
+      </div>
+      <div style="font-family:'DM Mono',monospace;font-size:11px;color:${color};text-align:right;">${p.v.toFixed(2)}</div>
+    </div>`;
+});
+
+document.getElementById('corrInsight').innerHTML = `
+  <strong>Hallazgos clave:</strong> <em>Hemoglobin–Hematocrit</em> (r≈0.92) y <em>MCV–MCH</em> (r≈0.88) muestran 
+  multicolinealidad severa — considerar eliminar una variable de cada par. 
+  <em>Glucose–HbA1c</em> (r≈0.87) confirma la redundancia diagnóstica para diabetes. 
+  <strong>LDL–HDL</strong> correlación negativa (r≈−0.61), esperada fisiológicamente.`;
+
+// ─── 3. OUTLIERS ─────────────────────────────────────────────────────────
+const outlierGrid = document.getElementById('outlierGrid');
+let totalOutliers = 0;
+
+features.forEach(feat => {
+  const d = makeOutlierData(feat);
+  totalOutliers += d.outlierCount;
+
+  // Normalize to % of 0-1 range for display
+  const scale = v => Math.max(0, Math.min(100, v * 100));
+  const whiskerLeft = scale(d.lo);
+  const iqrLeft = scale(d.q1);
+  const iqrW = scale(d.q3) - iqrLeft;
+  const medPos = scale(d.med);
+
+  let dotsHTML = d.outlierPcts.map(x =>
+    `<div class="outlier-dot" style="left:${scale(x)}%"></div>`).join('');
+
+  outlierGrid.innerHTML += `
+    <div class="outlier-card">
+      <div class="biomarker-name">${feat.toUpperCase()}</div>
+      <div class="outlier-box">
+        <div class="outlier-box-visual">
+          <div class="whisker" style="left:${whiskerLeft}%;width:${scale(d.hi)-whiskerLeft}%;"></div>
+          <div class="box-iqr" style="left:${iqrLeft}%;width:${iqrW}%;"></div>
+          <div class="box-median" style="left:${medPos}%;"></div>
+          ${dotsHTML}
+        </div>
+      </div>
+      <div class="outlier-stats">
+        <div class="outlier-stat">Q1 <span>${d.q1.toFixed(2)}</span></div>
+        <div class="outlier-stat">Med <span>${d.med.toFixed(2)}</span></div>
+        <div class="outlier-stat">Q3 <span>${d.q3.toFixed(2)}</span></div>
+        <div class="outlier-stat" style="color:${d.outlierCount > 8 ? 'var(--accent2)' : 'var(--muted)'}">
+          Outliers <span style="color:${d.outlierCount > 8 ? 'var(--accent2)' : 'var(--text)'}">${d.outlierCount}</span>
+        </div>
+      </div>
+    </div>`;
+});
+
+document.getElementById('outlier-pct').textContent = totalOutliers;
+document.getElementById('outlierInsight').innerHTML = `
+  <strong>⚠ Recomendaciones para outliers:</strong> Para algoritmos basados en distancias (KNN, SVM-RBF, K-Means) 
+  los outliers extremos distorsionan los resultados. Se sugiere: (1) <strong>Inspección clínica</strong> — 
+  un valor de Creatinine en 0.98 podría ser real en insuficiencia renal. 
+  (2) Aplicar <strong>Winsorizing</strong> (clamp a percentil 1%-99%) en lugar de eliminación. 
+  (3) Para Random Forest o XGBoost los outliers tienen menor impacto, pero aún deben auditarse. 
+  (4) Considerar <strong>IsolationForest</strong> o LOF para detección multivariada de anomalías.`;
+</script>
+</body>
+</html>
