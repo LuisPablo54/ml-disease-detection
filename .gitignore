@@ -13,6 +13,7 @@ venv/
 env/
 .venv/
 ENV/
+ml_env/
 
 # ======================
 # Jupyter Notebook
