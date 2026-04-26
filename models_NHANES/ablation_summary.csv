@@ -1,0 +1,10 @@
+model,strategy,F1 (mean ± std),AUC (mean ± std)
+DecisionTree,ADASYN,0.9952 ± 0.0033,0.9985 ± 0.0020
+DecisionTree,SMOTE,0.9921 ± 0.0038,0.9987 ± 0.0017
+DecisionTree,Sin balanceo,0.9989 ± 0.0015,0.9989 ± 0.0015
+MLP,ADASYN,0.8832 ± 0.0139,0.9957 ± 0.0024
+MLP,SMOTE,0.8826 ± 0.0348,0.9958 ± 0.0024
+MLP,Sin balanceo,0.8230 ± 0.0492,0.9911 ± 0.0054
+SVM,ADASYN,0.8387 ± 0.0198,0.9937 ± 0.0025
+SVM,SMOTE,0.8351 ± 0.0078,0.9942 ± 0.0024
+SVM,Sin balanceo,0.7973 ± 0.0149,0.9942 ± 0.0021
