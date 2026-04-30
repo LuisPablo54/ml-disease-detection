@@ -1,0 +1,4 @@
+Experimento,Accuracy,F1-Macro,F1-Weighted
+Sintético → Sintético,1.0,1.0,1.0
+Sintético → NHANES (Domain Shift),0.0787,0.0365,0.0115
+NHANES → NHANES,0.9992,0.9967,0.9992

@@ -1,0 +1,16 @@
+Enfermedad,Rank,Biomarcador,SHAP medio
+anemia,1,Red Blood Cells,0.022
+anemia,2,White Blood Cells,0.0095
+anemia,3,Hematocrit,0.0075
+borderline,1,Hematocrit,0.0915
+borderline,2,Red Blood Cells,0.0819
+borderline,3,White Blood Cells,0.0134
+healthy,1,Red Blood Cells,0.022
+healthy,2,White Blood Cells,0.0102
+healthy,3,Hematocrit,0.008
+thalassemia,1,Red Blood Cells,0.022
+thalassemia,2,White Blood Cells,0.0096
+thalassemia,3,Hematocrit,0.0075
+thrombocytopenia,1,Red Blood Cells,0.0218
+thrombocytopenia,2,White Blood Cells,0.0086
+thrombocytopenia,3,Hematocrit,0.0074

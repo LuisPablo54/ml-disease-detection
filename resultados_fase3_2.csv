@@ -1,0 +1,3 @@
+,Hamming Loss (↓),F1 Macro (↑),F1 Micro (↑),Jaccard (↑)
+Binary Relevance,0.0,1.0,1.0,1.0
+Classifier Chains,0.0,1.0,1.0,1.0
