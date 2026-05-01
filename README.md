@@ -1,14 +1,14 @@
 <div align="center">
 
-# 🩸 Detección Temprana de Enfermedades Hematológicas
-### mediante Aprendizaje Automático con Datos de Análisis Sanguíneos
+# 🩸 Detección de Condiciones Hematológicas mediante Aprendizaje Automático:  Comparación entre Datos Sintéticos y Reales (NHANES 2017–2020)  
+###    
 
 [![Preprint](https://img.shields.io/badge/DOI-10.13140%2FRG.2.2.35072.29440-blue?style=flat-square)](https://doi.org/10.13140/RG.2.2.35072.29440)
 ![Python](https://img.shields.io/badge/Python-3.x-3776AB?style=flat-square&logo=python&logoColor=white)
 ![ML](https://img.shields.io/badge/Machine%20Learning-Scikit--learn-F7931E?style=flat-square&logo=scikit-learn&logoColor=white)
-![Status](https://img.shields.io/badge/Estado-En%20desarrollo-yellow?style=flat-square)
+![Status](https://img.shields.io/badge/Estado-Completado-success?style=flat-square)
 
-*Proyecto de aprendizaje automático aplicado a datos clínicos para la detección temprana de enfermedades, validado con datos reales de la* ***NHANES***
+*Proyecto de detección automática de condiciones hematológicas usando modelos de Machine Learning, comparando datos sintéticos y datos reales de NHANES 2017–2020.*
 
 </div>
 
@@ -16,100 +16,91 @@
 
 ## 📋 Descripción
 
-El objetivo principal es analizar y modelar parámetros clínicos —niveles de glucosa, presión sanguínea, IMC y otros indicadores— usando técnicas de **Machine Learning supervisado**, con el fin de identificar patrones asociados al riesgo de enfermedades metabólicas.
+Este trabajo desarrolla, entrena y evalúa modelos de aprendizaje automático para la **detección temprana** de las siguientes condiciones:
 
-> ⚠️ **Nota:** Los modelos desarrollados funcionan como **herramienta de apoyo al análisis clínico** y no sustituyen el diagnóstico médico profesional.
+- **Anemia**
+- **Talasemia**
+- **Trombocitopenia**
+- **Diabetes**
+
+Se utilizaron dos fuentes de datos:
+- Dataset sintético (`Multiple Disease Prediction`)
+- Datos reales del estudio epidemiológico **NHANES 2017–2020**
+
+Se realizó un análisis completo que incluye validación clínica de umbrales diagnósticos, selección de características (RFE), análisis de componentes principales (PCA), estudio de balanceo de clases (SMOTE y ADASYN), optimización de hiperparámetros y análisis de **domain shift** entre datos sintéticos y reales.
+
+> ⚠️ **Nota:** Los modelos son herramientas de apoyo experimental y **no sustituyen** el diagnóstico médico profesional.
 
 ---
 
-## 📊 Dataset
+## 📊 Datasets
 
-El conjunto de datos de entrenamiento cuenta con **2,000 registros** y las siguientes variables:
+### 1. Dataset Sintético
+- Origen: `Multiple Disease Prediction`
+- Etiquetas: Anemia, Diabetes, Talasemia, Trombocitopenia y Sano
 
-| Variable | Descripción |
-|---|---|
-| `Pregnancies` | Número de embarazos |
-| `Glucose` | Nivel de glucosa en sangre |
-| `BloodPressure` | Presión arterial |
-| `SkinThickness` | Grosor del pliegue cutáneo |
-| `Insulin` | Nivel de insulina |
-| `BMI` | Índice de masa corporal |
-| `DiabetesPedigreeFunction` | Función de pedigrí de diabetes |
-| `Age` | Edad del paciente |
-| `Outcome` | ⭐ Variable objetivo |
+### 2. Datos Reales - NHANES 2017–2020
+- Más de 5,000 registros tras limpieza
+- Variables hematológicas y bioquímicas (hemoglobina, plaquetas, MCV, MCH, glucosa, HbA1c, etc.)
+- Etiquetado según criterios clínicos internacionales (OMS, ADA, etc.)
 
 ---
 
 ## 🔬 Metodología
 
-### Etapa 1 — Modelado con datos simulados
+### Etapas principales
 
-**EDA → Preprocesamiento → Análisis estadístico → Entrenamiento → Evaluación**
-1. **Análisis exploratorio de datos (EDA)**
-2. **Limpieza y preprocesamiento**
-3. **Análisis estadístico** de variables clínicas
-4. **Entrenamiento de modelos:**
-   - Regresión logística / múltiple
-   - Árboles de decisión
-5. **Evaluación mediante métricas:** Accuracy · Precision · Recall · F1-score · ROC-AUC
-6. **Interpretación de resultados** y análisis de errores
-
----
-
-### Etapa 2 — Validación con datos reales (NHANES)
-
-Datos prepandemia **2017 – marzo 2020**, integrando los siguientes archivos:
-
-| Archivo | Contenido |
-|---|---|
-| `P_DEMO.xpt` | Demografía (edad, sexo, etc.) |
-| `P_CBC.xpt` | Hemograma completo (plaquetas, leucocitos, eritrocitos) |
-| `P_BIOPRO.xpt` | Bioquímica (ALT, AST, Creatinina, Glucosa, Colesterol) |
-| `P_TCHOL.xpt` | Colesterol total |
-| `P_HDL.xpt` | HDL |
-| `P_TRIGLY.xpt` | Triglicéridos + LDL |
-| `P_GHB.xpt` | HbA1c |
-| `P_INS.xpt` | Insulina |
-| `P_HSCRP.xpt` | Proteína C Reactiva |
-| `P_GLU.xpt` | Glucosa en ayunas |
-| `P_BMX.xpt` | BMI, peso, talla |
-| `P_BPXO.xpt` | Presión arterial + frecuencia cardíaca |
-
-**Pasos planeados:**
-
-2. Consolidación de archivos en un único dataset integrado
-3. Etiquetado clínico por enfermedad para validación rudimentaria de modelos
-4. Prototipo de interfaz web que simule resultados de laboratorio médico
+1. **Validación clínica** de umbrales diagnósticos
+2. **Selección de características** mediante Recursive Feature Elimination (RFE)
+3. **Análisis exploratorio** con PCA
+4. **Balanceo de clases**: SMOTE y ADASYN
+5. **Entrenamiento y optimización** de tres modelos:
+   - Decision Tree
+   - Support Vector Machine (SVM)
+   - Multi-Layer Perceptron (MLP)
+6. **Interpretabilidad** con valores SHAP
+7. **Clasificación multietiqueta** (Binary Relevance y Classifier Chains)
+8. **Evaluación de domain shift** (sintético → reales)
 
 ---
 
-## 🎯 Objetivos
+## 🎯 Resultados Principales
 
-- [ ] Identificar patrones clínicos asociados a posibles enfermedades
-- [ ] Comparar el desempeño de distintos modelos de ML
-- [ ] Evaluar la interpretabilidad de los modelos en contexto clínico
-- [ ] Analizar el potencial del ML para detección temprana de riesgos en salud
+- **Datos sintéticos**: Rendimiento cercano a la perfección (F1-Macro ≈ 1.00)
+- **Transferencia a datos reales**: Severa degradación (hasta **75 puntos porcentuales** de pérdida)
+- **Mejor configuración en datos reales**: **SVM + SMOTE** (mejor equilibrio entre Accuracy y F1-Macro)
+- Confirmación de la importancia de entrenar y evaluar con datos reales de la población objetivo
 
 ---
 
 ## 🛠️ Tecnologías
 
-![Python](https://img.shields.io/badge/-Python-3776AB?style=flat-square&logo=python&logoColor=white)
-![Pandas](https://img.shields.io/badge/-Pandas-150458?style=flat-square&logo=pandas&logoColor=white)
-![NumPy](https://img.shields.io/badge/-NumPy-013243?style=flat-square&logo=numpy&logoColor=white)
-![Scikit-learn](https://img.shields.io/badge/-Scikit--learn-F7931E?style=flat-square&logo=scikit-learn&logoColor=white)
-![Matplotlib](https://img.shields.io/badge/-Matplotlib-11557c?style=flat-square)
-![Jupyter](https://img.shields.io/badge/-Jupyter-F37626?style=flat-square&logo=jupyter&logoColor=white)
+- **Python** 3
+- **Scikit-learn**
+- **Pandas / NumPy**
+- **Matplotlib / Seaborn**
+- **SHAP** (interpretabilidad)
+- **Imbalanced-learn** (SMOTE / ADASYN)
 
 ---
 
-## ⚖️ Consideraciones éticas
+## ⚖️ Consideraciones Éticas
 
-Este proyecto tiene fines **académicos y de investigación**. Los resultados obtenidos **no deben considerarse diagnósticos médicos** ni sustituir la evaluación de profesionales de la salud.
+Este proyecto tiene fines **académicos y de investigación**. Los modelos desarrollados **no deben usarse** para diagnóstico clínico sin validación rigurosa y supervisión médica.
 
 ---
 
 ## 📄 Publicación
 
-> Preprint publicado: **[10.13140/RG.2.2.35072.29440](https://doi.org/10.13140/RG.2.2.35072.29440)**
+**Preprint publicado**:  
+[10.13140/RG.2.2.14188.73608](https://doi.org/10.13140/RG.2.2.14188.73608)
 
+**Artículo completo**: `Articulo_Final_DTE.pdf`
+
+---
+
+**Autores**:
+- Paula Fernanda Rayas-López
+- Luis Pablo López-Iracheta
+
+---
